@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" data-theme="dark" class="i18n-loading">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Data Analysis Platform</title>
+  <meta name="description" content="Upload CSV, Excel, or JSON files for instant data analysis with charts, statistics, and insights." />
+  <script>
+    // Apply the saved language/direction before first paint (no flash of the wrong layout)
+    (function () {
+      var saved = localStorage.getItem('sdap.lang');
+      var lang = saved === 'ar' || saved === 'en' ? saved : ((navigator.language || '').toLowerCase().indexOf('ar') === 0 ? 'ar' : 'en');
+      document.documentElement.lang = lang;
+      document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+      var devPorts = ['5500', '5501', '5173', '3000'];
+      window.API_BASE_RESOLVED = window.API_BASE !== undefined ? window.API_BASE
+        : ((location.protocol === 'file:' || devPorts.indexOf(location.port) >= 0) ? 'http://' + (location.hostname || '127.0.0.1') + ':8000' : '');
+    })();
+  </script>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'%3E%3Crect x='2' y='14' width='6' height='12' rx='2' fill='%236c63ff'/%3E%3Crect x='11' y='8' width='6' height='18' rx='2' fill='%2300d4aa'/%3E%3Crect x='20' y='2' width='6' height='24' rx='2' fill='%23ff6b6b'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Header -->
+  <header class="navbar" role="banner">
+    <div class="navbar-brand">
+      <div class="logo-icon" aria-hidden="true">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+          <rect x="2" y="14" width="6" height="12" rx="2" fill="var(--accent)"/>
+          <rect x="11" y="8" width="6" height="18" rx="2" fill="var(--accent-2)"/>
+          <rect x="20" y="2" width="6" height="24" rx="2" fill="var(--accent-3)"/>
+        </svg>
+      </div>
+      <span class="brand-name raw" dir="ltr">DataSense <span class="brand-tag">Pro</span></span>
+    </div>
+    <nav class="navbar-actions" data-i18n-aria="nav.top" aria-label="Top navigation">
+      <span id="file-badge" class="file-badge hidden" aria-live="polite" dir="auto"></span>
+      <div class="lang-switch" role="group" data-i18n-aria="nav.language" aria-label="Language">
+        <button class="lang-btn raw" data-lang="ar" lang="ar" dir="rtl" aria-pressed="false">العربية</button>
+        <span class="lang-sep" aria-hidden="true">|</span>
+        <button class="lang-btn raw" data-lang="en" lang="en" dir="ltr" aria-pressed="false">English</button>
+      </div>
+      <button id="theme-toggle" class="icon-btn" data-i18n-aria="nav.theme" data-i18n-title="nav.theme" aria-label="Toggle dark/light mode" title="Toggle theme">
+        <svg id="theme-icon-dark" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        <svg id="theme-icon-light" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+    </nav>
+  </header>
+
+  <!-- Main Content -->
+  <main id="app" class="main-layout">
+
+    <!-- Upload / Empty State -->
+    <section id="empty-state" class="empty-state" data-i18n-aria="upload.section" aria-label="Upload section">
+      <div class="upload-hero">
+        <div class="hero-glow" aria-hidden="true"></div>
+        <div class="hero-icon" aria-hidden="true">
+          <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+            <circle cx="32" cy="32" r="32" fill="var(--accent)" fill-opacity="0.12"/>
+            <path d="M32 18v20M24 26l8-8 8 8" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M20 44h24" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h1 class="hero-title" data-i18n="upload.title">Smart Data Analysis</h1>
+        <p class="hero-subtitle" data-i18n="upload.subtitle">Drop your data file and get a clear, evidence-based summary — what the data shows, what to check, and what to do next.</p>
+        <div id="upload-label" class="upload-zone" role="button" tabindex="0" data-i18n-aria="upload.zone_aria" aria-label="Upload a data file - drag and drop or click to browse">
+          <div class="upload-zone-inner">
+            <p class="upload-main-text"><span data-i18n="upload.drag">Drag &amp; drop or</span> <span class="link-text" data-i18n="upload.browse">browse files</span></p>
+            <p class="upload-sub-text" data-i18n="upload.formats">Supports CSV, Excel (.xlsx/.xls), and JSON</p>
+          </div>
+        </div>
+        <input type="file" id="file-input" accept=".csv,.xlsx,.xls,.json" class="visually-hidden" data-i18n-aria="upload.choose" aria-label="Choose data file" />
+        <div id="upload-error" class="upload-error hidden" role="alert" aria-live="assertive"></div>
+        <ol class="journey-preview" aria-hidden="false">
+          <li><span class="jp-num">1</span><span data-i18n="step.upload">Upload data</span></li>
+          <li><span class="jp-num">2</span><span data-i18n="step.quality">Review data quality</span></li>
+          <li><span class="jp-num">3</span><span data-i18n="step.cleaning">Review cleaning changes</span></li>
+          <li><span class="jp-num">4</span><span data-i18n="step.findings">Explore findings</span></li>
+          <li><span class="jp-num">5</span><span data-i18n="step.actions">Decide next actions</span></li>
+          <li><span class="jp-num">6</span><span data-i18n="step.export">Export report</span></li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- Loading Spinner -->
+    <div id="loading-overlay" class="loading-overlay hidden" aria-live="polite">
+      <div class="spinner-container">
+        <div class="spinner"></div>
+        <p class="spinner-text" data-i18n="loading.analyzing">Analyzing your data…</p>
+      </div>
+    </div>
+
+    <!-- Dashboard (shown after upload) -->
+    <div id="dashboard" class="dashboard hidden">
+
+      <!-- Dashboard header bar -->
+      <div class="dash-header">
+        <div class="dash-title-group">
+          <h2 class="dash-filename" id="dash-filename" dir="auto"></h2>
+          <span class="dash-meta" id="dash-meta"></span>
+        </div>
+        <button id="upload-new-btn" class="btn-secondary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <span data-i18n="dash.upload_new">Upload New File</span>
+        </button>
+      </div>
+
+      <!-- Decision workflow -->
+      <nav class="stepper-wrap" data-i18n-aria="step.aria" aria-label="Workflow steps">
+        <ol id="stepper" class="stepper"></ol>
+      </nav>
+
+      <!-- Primary navigation (manager view first) -->
+      <nav class="tab-nav" role="tablist" data-i18n-aria="tabs.aria" aria-label="Dashboard tabs">
+        <button class="tab-btn active" role="tab" aria-selected="true" aria-controls="tab-summary" id="btn-tab-summary" data-tab="summary" data-i18n="tab.summary">Summary</button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-explore" id="btn-tab-explore" data-tab="explore" data-i18n="tab.explore">Analyze</button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-quality" id="btn-tab-quality" data-tab="quality"><span data-i18n="tab.quality">Data Quality</span> <span class="tab-count" id="quality-count"></span></button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-cleaning" id="btn-tab-cleaning" data-tab="cleaning"><span data-i18n="tab.cleaning">Cleaning</span> <span class="tab-count" id="cleaning-count"></span></button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-findings" id="btn-tab-findings" data-tab="findings" data-i18n="tab.findings">Findings</button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-actions" id="btn-tab-actions" data-tab="actions" data-i18n="tab.actions">Next Actions</button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-export" id="btn-tab-export" data-tab="export" data-i18n="tab.export">Export</button>
+        <button class="tab-btn tab-btn-secondary" role="tab" aria-selected="false" id="btn-tab-analysis" data-tab="analysis" data-i18n="tab.analysis">Detailed Analysis</button>
+      </nav>
+      <nav class="subtab-nav hidden" id="subtab-nav" role="tablist" data-i18n-aria="tab.analysis" aria-label="Detailed analysis">
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-overview" id="btn-tab-overview" data-tab="overview" data-i18n="tab.overview">Technical Overview</button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-preview" id="btn-tab-preview" data-tab="preview" data-i18n="tab.preview">Data Preview</button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-stats" id="btn-tab-stats" data-tab="stats" data-i18n="tab.stats">Statistics</button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-charts" id="btn-tab-charts" data-tab="charts" data-i18n="tab.charts">Charts</button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-correlation" id="btn-tab-correlation" data-tab="correlation" data-i18n="tab.correlation">Correlation</button>
+      </nav>
+
+      <!-- Executive Summary (default manager view) -->
+      <div id="tab-summary" class="tab-panel active" role="tabpanel" aria-labelledby="btn-tab-summary">
+        <div id="summary-evidence" class="evidence-banner"></div>
+        <div class="kpi-grid" id="summary-kpis"></div>
+        <div id="summary-charts" class="charts-grid-big summary-charts"></div>
+        <div class="grid-2col">
+          <div class="card"><h3 class="card-title" data-i18n="sum.key_findings">Key findings</h3><div id="summary-findings" class="mini-list"></div></div>
+          <div class="card"><h3 class="card-title" data-i18n="sum.risks">Risks and unusual changes</h3><div id="summary-risks" class="mini-list"></div></div>
+        </div>
+        <div class="grid-2col">
+          <div class="card"><h3 class="card-title" data-i18n="sum.opportunities">Opportunities worth investigating</h3><div id="summary-opportunities" class="mini-list"></div></div>
+          <div class="card"><h3 class="card-title" data-i18n="sum.quality_warnings">Data-quality warnings</h3><div id="summary-warnings" class="mini-list"></div></div>
+        </div>
+        <div class="card full-card">
+          <div class="card-header">
+            <h3 class="card-title" data-i18n="sum.next_actions">Recommended next actions</h3>
+            <button class="btn-link" data-goto="actions" data-i18n="sum.see_all_actions">See all actions</button>
+          </div>
+          <ol id="summary-actions" class="action-list"></ol>
+        </div>
+        <details class="card full-card fold-card">
+          <summary class="card-title" data-i18n="sum.about">About this dataset</summary>
+          <div id="summary-description" class="summary-description"></div>
+        </details>
+        <details class="help-box"><summary><strong data-i18n="help.title">Data-quality issue or business finding?</strong></summary> <span data-i18n="help.quality_vs_business"></span></details>
+      </div>
+
+      <!-- Analyze: user-chosen columns, groupings and filters (computed by /datasets/{id}/explore) -->
+      <div id="tab-explore" class="tab-panel hidden" role="tabpanel" aria-labelledby="btn-tab-explore">
+        <div class="ex-bar card">
+          <div class="seg-toggle ex-modes" id="ex-modes" role="group" data-i18n-aria="ex.ui.mode" aria-label="Analysis mode"></div>
+          <label class="ex-inline"><span data-i18n="ex.ui.metric">Metric</span>
+            <select id="ex-metric" class="search-input"></select></label>
+          <button type="button" id="ex-customize" class="btn-secondary small" aria-expanded="false" aria-controls="ex-setup" data-i18n="ex.ui.customize">Columns &amp; options</button>
+          <button type="button" id="ex-run" class="btn-primary small" data-i18n="ex.ui.run">Update</button>
+          <span id="ex-dirty" class="muted ex-status" aria-live="polite"></span>
+          <span class="info-tip" tabindex="0" role="note" data-i18n-title="ex.ui.intro" data-i18n-aria="ex.ui.intro">i</span>
+        </div>
+        <div id="ex-error" class="upload-error hidden" role="alert"></div>
+        <div class="ex-setup hidden" id="ex-setup">
+          <section class="card" id="ex-columns-card">
+            <div class="card-header">
+              <h3 class="card-title" data-i18n="ex.ui.choose_columns">Columns</h3>
+              <div class="ex-col-actions">
+                <input type="search" id="ex-col-search" class="search-input small" data-i18n-placeholder="ex.ui.search_columns" data-i18n-aria="ex.ui.search_columns" placeholder="Search…" />
+                <button type="button" id="ex-select-all" class="btn-secondary small" data-i18n="ex.ui.select_all">All</button>
+                <button type="button" id="ex-clear" class="btn-secondary small" data-i18n="ex.ui.clear">Clear</button>
+                <button type="button" id="ex-recommended" class="btn-secondary small" data-i18n="ex.ui.recommended">Recommended</button>
+              </div>
+            </div>
+            <p class="muted ex-count" id="ex-col-count" aria-live="polite"></p>
+            <div id="ex-column-list" class="ex-column-list" role="group" data-i18n-aria="ex.ui.choose_columns" aria-label="Columns"></div>
+          </section>
+          <section class="card" id="ex-config-card">
+            <h3 class="card-title" data-i18n="ex.ui.setup">Chart setup</h3>
+            <div class="ex-config-grid">
+              <label class="ex-field"><span class="ex-field-label"><span data-i18n="ex.ui.primary">Group by</span> <span class="info-tip" tabindex="0" data-i18n-title="ex.ui.primary_help">i</span></span>
+                <select id="ex-primary" class="search-input"></select></label>
+              <label class="ex-field"><span class="ex-field-label"><span data-i18n="ex.ui.split">Split by</span> <span class="info-tip" tabindex="0" data-i18n-title="ex.ui.split_help">i</span></span>
+                <select id="ex-split" class="search-input"></select></label>
+              <label class="ex-field"><span class="ex-field-label"><span data-i18n="ex.ui.breakdown">Status column</span> <span class="info-tip" tabindex="0" data-i18n-title="ex.ui.breakdown_help">i</span></span>
+                <select id="ex-breakdown" class="search-input"></select></label>
+              <label class="ex-field"><span class="ex-field-label" data-i18n="ex.ui.date">Date column</span>
+                <select id="ex-date" class="search-input"></select></label>
+              <label class="ex-field"><span class="ex-field-label" data-i18n="ex.ui.freq">Interval</span>
+                <select id="ex-freq" class="search-input"></select></label>
+              <label class="ex-field"><span class="ex-field-label"><span data-i18n="ex.ui.top_n">Categories shown</span> <span class="info-tip" tabindex="0" data-i18n-title="ex.ui.top_n_help">i</span></span>
+                <input type="number" id="ex-topn" class="search-input small" min="3" max="50" step="1" value="10" /></label>
+            </div>
+            <details class="ex-more">
+              <summary data-i18n="ex.ui.more_options">More options</summary>
+              <div class="ex-field ex-field-wide"><span class="ex-field-label"><span data-i18n="ex.ui.secondary">Detail groupings</span> <span class="info-tip" tabindex="0" data-i18n-title="ex.ui.secondary_help">i</span></span>
+                <div id="ex-secondary" class="ex-checks" role="group" data-i18n-aria="ex.ui.secondary" aria-label="Detail groupings"></div></div>
+              <div class="ex-field ex-field-wide"><span class="ex-field-label" data-i18n="ex.ui.analyses">Detail sections</span>
+                <div id="ex-analyses" class="ex-checks" role="group" data-i18n-aria="ex.ui.analyses" aria-label="Detail sections"></div></div>
+            </details>
+          </section>
+        </div>
+        <section class="ex-filters hidden" id="ex-filters-card" data-i18n-aria="ex.ui.filters" aria-label="Filters">
+          <div id="ex-filters" class="ex-filter-row"></div>
+          <div class="ex-filter-foot">
+            <span class="muted" id="ex-filter-status" aria-live="polite"></span>
+            <button type="button" id="ex-reset-filters" class="btn-link" data-i18n="ex.ui.reset_filters">Reset filters</button>
+          </div>
+        </section>
+        <div id="ex-results" aria-live="polite"></div>
+      </div>
+
+      <!-- Data Quality Tab (profile of the original upload) -->
+      <div id="tab-quality" class="tab-panel hidden" role="tabpanel" aria-labelledby="btn-tab-quality">
+        <div class="step-intro"><strong data-i18n="step.quality">Review data quality</strong> <span class="info-tip" tabindex="0" role="note" data-i18n-title="quality.intro" data-i18n-aria="quality.intro">i</span></div>
+        <div class="kpi-grid" id="quality-kpis"></div>
+        <div class="card full-card">
+          <div class="card-header">
+            <h3 class="card-title" data-i18n="quality.issues_title">Issues in the original upload</h3>
+            <div class="seg-toggle" id="issue-filter" role="group" data-i18n-aria="quality.filter_aria" aria-label="Filter issues by severity">
+              <button class="seg-btn active" data-sev="all" data-i18n="quality.filter_all">All</button>
+              <button class="seg-btn" data-sev="high" data-i18n="severity.high">High</button>
+              <button class="seg-btn" data-sev="medium" data-i18n="severity.medium">Medium</button>
+              <button class="seg-btn" data-sev="low" data-i18n="quality.filter_low">Low / info</button>
+            </div>
+          </div>
+          <div id="issue-list" class="issue-list"></div>
+        </div>
+        <details class="card full-card tech-details">
+          <summary class="card-title"><span data-i18n="quality.profile_title">Column profile</span> <span class="card-subtitle" data-i18n="quality.profile_sub">(technical — click a row for details)</span></summary>
+          <div id="profile-table" class="table-scroll"></div>
+        </details>
+        <div class="grid-2col">
+          <div class="card" id="dup-card"><h3 class="card-title" data-i18n="quality.duplicates">Duplicates</h3><div id="dup-info"></div></div>
+          <div class="card" id="names-card"><h3 class="card-title" data-i18n="quality.names">Column names</h3><div id="name-info"></div></div>
+        </div>
+        <div class="step-next"><button class="btn-primary" data-goto="cleaning" data-i18n="step.next_cleaning">Next: review cleaning changes</button></div>
+      </div>
+
+      <!-- Cleaning Tab -->
+      <div id="tab-cleaning" class="tab-panel hidden" role="tabpanel" aria-labelledby="btn-tab-cleaning">
+        <div class="card full-card toolbar-card">
+          <div class="toolbar">
+            <div>
+              <h3 class="card-title" data-i18n="clean.title">Cleaning plan</h3>
+              <p class="muted" id="clean-status"></p>
+            </div>
+            <div class="toolbar-actions">
+              <button id="clean-apply" class="btn-primary" disabled data-i18n="clean.apply">Apply selected changes</button>
+              <button id="clean-defaults" class="btn-secondary" data-i18n="clean.defaults">Safe fixes only</button>
+              <button id="clean-undo" class="btn-secondary" data-i18n="clean.undo">Undo</button>
+              <button id="clean-reset" class="btn-secondary" data-i18n="clean.reset" data-i18n-title="clean.reset_title">Reset to original</button>
+            </div>
+          </div>
+          <div id="clean-error" class="upload-error hidden" role="alert"></div>
+        </div>
+        <div class="grid-2col plan-grid">
+          <div class="card">
+            <h3 class="card-title"><span data-i18n="clean.safe_title">Automatic safe fixes</span> <span class="card-subtitle" data-i18n="clean.safe_sub">— lossless, applied by default</span></h3>
+            <div id="plan-safe" class="plan-list"></div>
+          </div>
+          <div class="card">
+            <h3 class="card-title"><span data-i18n="clean.review_title">Needs your review</span> <span class="card-subtitle" data-i18n="clean.review_sub">— never applied without approval</span></h3>
+            <div id="plan-review" class="plan-list"></div>
+          </div>
+        </div>
+        <div class="card full-card">
+          <h3 class="card-title" data-i18n="clean.report_title">Before / after quality report</h3>
+          <div id="quality-report"></div>
+        </div>
+        <details class="card full-card tech-details">
+          <summary class="card-title" data-i18n="clean.log_title">Cleaning log</summary>
+          <div id="clean-log" class="table-scroll"></div>
+        </details>
+        <details class="card full-card tech-details" id="changes-card">
+          <summary class="card-title"><span data-i18n="clean.changes_title">Changed values</span> <span class="card-subtitle" id="changes-meta"></span></summary>
+          <div class="card-header"><span></span><select id="changes-column" class="search-input" data-i18n-aria="clean.changes_filter" aria-label="Filter changes by column"></select></div>
+          <div id="changes-table" class="table-scroll"></div>
+          <div id="changes-pager" class="pager"></div>
+        </details>
+        <div class="step-next"><button class="btn-primary" data-goto="findings" data-i18n="step.next_findings">Next: explore findings</button></div>
+      </div>
+
+      <!-- Findings (insight cards) -->
+      <div id="tab-findings" class="tab-panel hidden" role="tabpanel" aria-labelledby="btn-tab-findings">
+        <div class="step-intro"><strong data-i18n="step.findings">Explore findings</strong> <span class="info-tip" tabindex="0" role="note" data-i18n-title="findings.intro" data-i18n-aria="findings.intro">i</span></div>
+        <div class="card-header findings-toolbar">
+          <div class="seg-toggle" id="findings-filter" role="group" data-i18n-aria="findings.filter_aria" aria-label="Filter findings">
+            <button class="seg-btn active" data-kind="all" data-i18n="findings.filter_all">All</button>
+            <button class="seg-btn" data-kind="data_quality" data-i18n="kind_card.data_quality">Data quality</button>
+            <button class="seg-btn" data-kind="business" data-i18n="kind_card.business">Business findings</button>
+            <button class="seg-btn" data-kind="observation" data-i18n="kind_card.observation">Observations</button>
+          </div>
+        </div>
+        <div id="findings-container"></div>
+        <div class="card full-card">
+          <h3 class="card-title" data-i18n="rep.limitations">Limitations</h3>
+          <ul id="limitations-list" class="limit-list"></ul>
+        </div>
+        <div class="step-next"><button class="btn-primary" data-goto="actions" data-i18n="step.next_actions">Next: decide next actions</button></div>
+      </div>
+
+      <!-- Next actions (decision step) -->
+      <div id="tab-actions" class="tab-panel hidden" role="tabpanel" aria-labelledby="btn-tab-actions">
+        <div class="step-intro"><strong data-i18n="step.actions">Decide next actions</strong> <span class="info-tip" tabindex="0" role="note" data-i18n-title="actions.intro" data-i18n-aria="actions.intro">i</span></div>
+        <div class="grid-2col">
+          <div class="card"><h3 class="card-title" data-i18n="actions.fix_data">Fix the data first</h3><ol id="actions-fix" class="action-list"></ol></div>
+          <div class="card"><h3 class="card-title" data-i18n="actions.investigate">Investigate and decide</h3><ol id="actions-investigate" class="action-list"></ol></div>
+        </div>
+        <div class="step-next"><button class="btn-primary" data-goto="export" data-i18n="step.next_export">Next: export the report</button></div>
+      </div>
+
+      <!-- Export Tab -->
+      <div id="tab-export" class="tab-panel hidden" role="tabpanel" aria-labelledby="btn-tab-export">
+        <div class="card full-card">
+          <div class="card-header">
+            <div>
+              <h3 class="card-title" data-i18n="export.lang_title">Report language</h3>
+              <p class="muted" data-i18n="export.lang_note">Reports are generated in the selected language. Data values and column names are never translated.</p>
+            </div>
+            <div class="seg-toggle" id="report-lang" role="group" data-i18n-aria="export.lang_title" aria-label="Report language">
+              <button class="seg-btn raw" data-rlang="ar" lang="ar">العربية</button>
+              <button class="seg-btn raw" data-rlang="en" lang="en">English</button>
+            </div>
+          </div>
+        </div>
+        <div class="export-grid" id="export-grid"></div>
+        <div class="card full-card">
+          <h3 class="card-title" data-i18n="export.reproduce_title">Reproduce cleaning</h3>
+          <p class="muted" data-i18n="export.reproduce_note">Export the cleaning recipe, then re-apply it later to the same file to reproduce the exact cleaned dataset.</p>
+          <div class="toolbar-actions" style="margin-top:0.75rem">
+            <button id="recipe-import-btn" class="btn-secondary" data-i18n="export.apply_recipe">Apply a saved recipe…</button>
+            <input type="file" id="recipe-input" accept=".json,application/json" class="visually-hidden" data-i18n-aria="export.choose_recipe" aria-label="Choose recipe file" />
+          </div>
+          <div id="recipe-msg" class="muted" style="margin-top:0.5rem"></div>
+        </div>
+      </div>
+
+      <!-- ── Detailed analysis (technical) ── -->
+      <!-- Technical Overview -->
+      <div id="tab-overview" class="tab-panel hidden" role="tabpanel" aria-labelledby="btn-tab-overview">
+        <div id="clean-banner" class="clean-banner"></div>
+        <div class="kpi-grid" id="kpi-grid"></div>
+        <div class="grid-2col">
+          <div class="card" id="col-types-card">
+            <h3 class="card-title" data-i18n="overview.col_types">Column Types</h3>
+            <div id="col-types-list" class="tag-list"></div>
+          </div>
+          <div class="card" id="missing-card">
+            <h3 class="card-title" data-i18n="overview.quality">Data Quality</h3>
+            <div id="missing-list" class="quality-list"></div>
+          </div>
+        </div>
+        <div class="card" id="cat-overview-card">
+          <h3 class="card-title" data-i18n="overview.cat_dist">Categorical Distributions</h3>
+          <div id="cat-charts-grid" class="charts-grid"></div>
+        </div>
+      </div>
+
+      <!-- Data Preview Tab -->
+      <div id="tab-preview" class="tab-panel hidden" role="tabpanel" aria-labelledby="btn-tab-preview">
+        <div class="card full-card">
+          <div class="card-header">
+            <h3 class="card-title"><span data-i18n="preview.title">Data Preview</span> <span class="card-subtitle" id="preview-meta"></span></h3>
+            <div class="seg-toggle" id="version-toggle" role="group" data-i18n-aria="preview.version" aria-label="Dataset version">
+              <button class="seg-btn active" data-version="cleaned" data-i18n="preview.cleaned">Cleaned</button>
+              <button class="seg-btn" data-version="original" data-i18n="preview.original">Original</button>
+            </div>
+          </div>
+          <div class="preview-controls">
+            <input type="search" id="row-search" data-i18n-placeholder="preview.search" data-i18n-aria="preview.search" placeholder="Search all values…" class="search-input" />
+            <input type="text" id="table-search" data-i18n-placeholder="preview.filter_columns" data-i18n-aria="preview.filter_columns" placeholder="Filter columns…" class="search-input" />
+            <select id="filter-col" class="search-input" data-i18n-aria="preview.filter_column" aria-label="Filter column"></select>
+            <select id="filter-op" class="search-input small" data-i18n-aria="preview.filter_operator" aria-label="Filter operator">
+              <option value="contains" data-i18n="op_filter.contains">contains</option>
+              <option value="equals" data-i18n="op_filter.equals">equals</option>
+              <option value="not_equals" data-i18n="op_filter.not_equals">not equal</option>
+              <option value="not_contains" data-i18n="op_filter.not_contains">does not contain</option>
+              <option value="gt" data-i18n="op_filter.gt">&gt;</option>
+              <option value="gte" data-i18n="op_filter.gte">≥</option>
+              <option value="lt" data-i18n="op_filter.lt">&lt;</option>
+              <option value="lte" data-i18n="op_filter.lte">≤</option>
+              <option value="is_missing" data-i18n="op_filter.is_missing">is missing</option>
+              <option value="not_missing" data-i18n="op_filter.not_missing">is not missing</option>
+            </select>
+            <input type="text" id="filter-val" data-i18n-placeholder="preview.value" data-i18n-aria="preview.value" placeholder="Value" class="search-input small" dir="auto" />
+            <button id="filter-add" class="btn-secondary" data-i18n="preview.add_filter">Add filter</button>
+            <label class="check-label"><input type="checkbox" id="changed-only" /> <span data-i18n="preview.changed_only">Only rows changed by cleaning</span></label>
+          </div>
+          <div id="filter-chips" class="chip-row"></div>
+          <div id="preview-error" class="upload-error hidden" role="alert"></div>
+          <div id="preview-table" class="table-scroll"></div>
+          <div id="preview-pager" class="pager"></div>
+          <p class="muted legend"><span class="changed-swatch"></span> <span data-i18n="preview.legend">Highlighted cells were changed by cleaning — hover to see the original value.</span></p>
+        </div>
+      </div>
+
+      <!-- Statistics Tab -->
+      <div id="tab-stats" class="tab-panel hidden" role="tabpanel" aria-labelledby="btn-tab-stats">
+        <div class="card full-card">
+          <h3 class="card-title"><span data-i18n="stats.numeric">Numeric Statistics</span> <span class="card-subtitle" data-i18n="stats.cleaned">(cleaned data)</span></h3>
+          <div id="stats-table-container" class="table-scroll"></div>
+        </div>
+        <div id="categorical-stats-container"></div>
+        <div id="datetime-stats-container"></div>
+      </div>
+
+      <!-- Charts Tab -->
+      <div id="tab-charts" class="tab-panel hidden" role="tabpanel" aria-labelledby="btn-tab-charts">
+        <div id="charts-notes" class="notes-box"></div>
+        <div id="charts-container" class="charts-grid-big"></div>
+      </div>
+
+      <!-- Correlation Tab -->
+      <div id="tab-correlation" class="tab-panel hidden" role="tabpanel" aria-labelledby="btn-tab-correlation">
+        <div class="card full-card">
+          <div class="card-header">
+            <h3 class="card-title"><span data-i18n="corr.title">Correlation Matrix</span> <span class="card-subtitle" data-i18n="corr.sub">(numeric measures — identifiers excluded)</span></h3>
+            <div class="seg-toggle" id="corr-method" role="group" data-i18n-aria="corr.method" aria-label="Correlation method">
+              <button class="seg-btn active" data-method="spearman" data-i18n="corr.spearman">Spearman</button>
+              <button class="seg-btn" data-method="pearson" data-i18n="corr.pearson">Pearson</button>
+            </div>
+          </div>
+          <div id="correlation-container"></div>
+        </div>
+        <div class="card full-card">
+          <h3 class="card-title"><span data-i18n="corr.rel_title">Relationships across variable types</span> <span class="card-subtitle" data-i18n="corr.rel_sub">(q = adjusted p-value)</span></h3>
+          <div id="relationships-container" class="table-scroll"></div>
+          <p class="muted" id="corr-excluded"></p>
+        </div>
+      </div>
+
+    </div><!-- /dashboard -->
+  </main>
+
+  <script src="i18n.js"></script>
+  <script src="script.js"></script>
+  <script src="explore.js"></script>
+</body>
+</html>

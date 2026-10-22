@@ -1,0 +1,9 @@
+# Never commit local environments or real data files
+**/.venv/
+**/venv/
+**/__pycache__/
+**/.pytest_cache/
+*.xlsx
+*.xls
+*.csv
+!samples/sales_messy.csv

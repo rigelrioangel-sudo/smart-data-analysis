@@ -1,0 +1,4 @@
+-r requirements.txt
+pytest
+httpx    # required by fastapi.testclient
+xlwt     # writes legacy .xls fixtures in tests

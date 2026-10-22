@@ -1,0 +1,14 @@
+# Render.com blueprint: connect the GitHub repository in Render → "New" → "Blueprint".
+services:
+  - type: web
+    name: smart-data-analysis
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: SDAP_MAX_DATASETS        # all visitors together (memory)
+        value: "20"
+      - key: SDAP_MAX_PER_SESSION     # open datasets per visitor
+        value: "3"
+      - key: SDAP_MAX_UPLOAD_MB
+        value: "25"

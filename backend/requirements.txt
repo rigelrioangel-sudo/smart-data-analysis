@@ -1,0 +1,10 @@
+# Pinned to the versions the test-suite passes with (reproducible public deployments)
+fastapi==0.143.0
+uvicorn[standard]==0.54.0
+pandas==3.0.6
+numpy==2.5.4
+scipy==1.18.1             # statistical tests (correlation p-values, Kruskal–Wallis, chi-square)
+openpyxl==3.1.5           # .xlsx reading
+xlrd==2.0.2               # legacy .xls reading
+xlsxwriter==3.2.9         # fast, formula-safe .xlsx exports
+python-multipart==0.0.32  # required by FastAPI for file uploads

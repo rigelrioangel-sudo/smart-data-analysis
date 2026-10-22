@@ -1,0 +1,10 @@
+**/.venv
+**/venv
+**/__pycache__
+**/.pytest_cache
+backend/tests
+samples
+*.csv
+*.xlsx
+*.xls
+.git
