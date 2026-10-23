@@ -1,4 +1,3 @@
-import uvicorn
 import contextvars
 import os
 import json
@@ -503,6 +502,8 @@ app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
 
 
 if __name__ == "__main__":
+    import uvicorn   # only needed to run the server (the in-browser version has no server)
+
     # Local by default; hosting platforms set PORT (and SDAP_HOST=0.0.0.0) to serve the public site
     uvicorn.run("main:app", host=os.environ.get("SDAP_HOST", "127.0.0.1"), port=int(os.environ.get("PORT", "8000")),
                 reload=os.environ.get("SDAP_RELOAD", "1") == "1", proxy_headers=True,

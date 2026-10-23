@@ -1275,6 +1275,10 @@ details.help-box > summary { cursor: pointer; }
   .ex-chart-head { flex-direction: column; }
 }
 
+/* Static hosting: the file is analyzed in the browser */
+.local-note { display: none; margin-top: 6px; color: var(--positive); }
+.sdap-static .local-note { display: block; }
+
 /* ===========================
    HIDDEN / UTILITY
    =========================== */

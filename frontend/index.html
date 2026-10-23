@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Smart Data Analysis Platform</title>
   <meta name="description" content="Upload CSV, Excel, or JSON files for instant data analysis with charts, statistics, and insights." />
+  <script src="config.js"></script>
   <script>
     // Apply the saved language/direction before first paint (no flash of the wrong layout)
     (function () {
@@ -14,9 +15,12 @@
       document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
       var devPorts = ['5500', '5501', '5173', '3000'];
       window.API_BASE_RESOLVED = window.API_BASE !== undefined ? window.API_BASE
+        : window.SDAP_STATIC ? ''   // static hosting: the in-browser engine answers API requests
         : ((location.protocol === 'file:' || devPorts.indexOf(location.port) >= 0) ? 'http://' + (location.hostname || '127.0.0.1') + ':8000' : '');
+      if (window.SDAP_STATIC) document.documentElement.classList.add('sdap-static');
     })();
   </script>
+  <script src="engine.js"></script>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'%3E%3Crect x='2' y='14' width='6' height='12' rx='2' fill='%236c63ff'/%3E%3Crect x='11' y='8' width='6' height='18' rx='2' fill='%2300d4aa'/%3E%3Crect x='20' y='2' width='6' height='24' rx='2' fill='%23ff6b6b'/%3E%3C/svg%3E" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -71,6 +75,7 @@
           <div class="upload-zone-inner">
             <p class="upload-main-text"><span data-i18n="upload.drag">Drag &amp; drop or</span> <span class="link-text" data-i18n="upload.browse">browse files</span></p>
             <p class="upload-sub-text" data-i18n="upload.formats">Supports CSV, Excel (.xlsx/.xls), and JSON</p>
+            <p class="upload-sub-text local-note" data-i18n="upload.local_note">🔒 Your file is analyzed on this device and never uploaded.</p>
           </div>
         </div>
         <input type="file" id="file-input" accept=".csv,.xlsx,.xls,.json" class="visually-hidden" data-i18n-aria="upload.choose" aria-label="Choose data file" />

@@ -40,7 +40,8 @@ const I18N = (() => {
 
   async function load(l) {
     if (dicts[l]) return dicts[l];
-    const resp = await fetch(`${base()}/locales/${l}.json`, { cache: 'no-cache' });
+    // Relative path: works at the site root and when published under a sub-path (e.g. GitHub Pages)
+    const resp = await fetch(`${base() ? base() + '/' : ''}locales/${l}.json`, { cache: 'no-cache' });
     if (!resp.ok) throw new Error(`Locale ${l} could not be loaded (${resp.status})`);
     dicts[l] = await resp.json();
     return dicts[l];
