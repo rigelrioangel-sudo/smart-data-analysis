@@ -50,15 +50,15 @@ A messy demo file is in [samples/sales_messy.csv](samples/sales_messy.csv)
 - Percentages always state their basis (within each group value, within each column value of a cross-table, or of all filtered records). Status differences are tested with chi-square / Cramér's V, unusual combinations with adjusted residuals (|r| ≥ 3), trends with Spearman ρ over complete periods (incomplete first/last periods are marked and excluded from change figures); all q-values are BH-adjusted within the analysis.
 - Higher counts are never labelled good or bad; findings state the numbers, why they may matter and a suggested check.
 
-## Live site (GitHub Pages)
-**https://rigelrioangel-sudo.github.io/smart-data-analysis/** — free, public, HTTPS, no login.
+## Live site (Vercel)
+**https://datasense-analytics.vercel.app/** — free (Hobby plan), public, HTTPS, no login.
 
 The static build runs the same Python backend inside the visitor's browser with Pyodide (`frontend/py-worker.js`); uploaded files are analyzed on the visitor's device and are never sent to any server. The first visit downloads the engine (about 40 s), later visits use the browser cache.
 
 Redeploy after changes:
 ```powershell
 python scripts/build_static.py dist      # writes the static site (config.js sets SDAP_STATIC = true)
-# then publish the contents of dist/ to the gh-pages branch
+cd dist; npx vercel@63.1.1 link --yes --project datasense-analytics; npx vercel@63.1.1 deploy --prod --yes
 ```
 
 ## Server deployment (each visitor sees only their own data)
