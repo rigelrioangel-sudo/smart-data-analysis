@@ -59,6 +59,12 @@ app.mount("/static", StaticFiles(directory=FRONTEND_DIR, html=False), name="stat
 # the token that uploaded it and looked up only with the caller's token (see core/store.py).
 SESSION_COOKIE = "sdap_sid"
 SESSION_MAX_AGE = 12 * 3600
+# Hosts that show the site inside their own page (e.g. Hugging Face Spaces) set these two:
+# SDAP_FRAME_ANCESTORS="https://huggingface.co" and SDAP_COOKIE_SAMESITE="none" (HTTPS only).
+FRAME_ANCESTORS = os.environ.get("SDAP_FRAME_ANCESTORS", "").strip()
+COOKIE_SAMESITE = os.environ.get("SDAP_COOKIE_SAMESITE", "lax").strip().lower()
+if COOKIE_SAMESITE not in ("lax", "strict", "none"):
+    COOKIE_SAMESITE = "lax"
 _SID_RE = re.compile(r"^[A-Za-z0-9_\-]{43}$")
 _current_sid: contextvars.ContextVar = contextvars.ContextVar("sdap_sid", default=None)
 
@@ -80,9 +86,14 @@ async def _session_and_security(request: Request, call_next):
         _current_sid.reset(token)
     if fresh:
         https = request.url.scheme == "https" or request.headers.get("x-forwarded-proto", "").split(",")[0].strip() == "https"
-        response.set_cookie(SESSION_COOKIE, sid, max_age=SESSION_MAX_AGE, httponly=True, samesite="lax", secure=https, path="/")
+        samesite = COOKIE_SAMESITE if (COOKIE_SAMESITE != "none" or https) else "lax"   # "none" requires HTTPS
+        response.set_cookie(SESSION_COOKIE, sid, max_age=SESSION_MAX_AGE, httponly=True, samesite=samesite,
+                            secure=https or samesite == "none", path="/")
     response.headers.setdefault("X-Content-Type-Options", "nosniff")
-    response.headers.setdefault("X-Frame-Options", "DENY")
+    if FRAME_ANCESTORS:
+        response.headers.setdefault("Content-Security-Policy", f"frame-ancestors 'self' {FRAME_ANCESTORS}")
+    else:
+        response.headers.setdefault("X-Frame-Options", "DENY")
     response.headers.setdefault("Referrer-Policy", "no-referrer")
     if request.url.path.startswith("/datasets/") or request.url.path == "/upload":
         response.headers.setdefault("Cache-Control", "no-store")   # never cache a visitor's data in shared caches
