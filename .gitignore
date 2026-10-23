@@ -7,3 +7,5 @@
 *.xls
 *.csv
 !samples/sales_messy.csv
+
+dist/

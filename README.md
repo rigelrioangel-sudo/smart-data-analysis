@@ -50,7 +50,18 @@ A messy demo file is in [samples/sales_messy.csv](samples/sales_messy.csv)
 - Percentages always state their basis (within each group value, within each column value of a cross-table, or of all filtered records). Status differences are tested with chi-square / Cramér's V, unusual combinations with adjusted residuals (|r| ≥ 3), trends with Spearman ρ over complete periods (incomplete first/last periods are marked and excluded from change figures); all q-values are BH-adjusted within the analysis.
 - Higher counts are never labelled good or bad; findings state the numbers, why they may matter and a suggested check.
 
-## Public deployment (each visitor sees only their own data)
+## Live site (GitHub Pages)
+**https://rigelrioangel-sudo.github.io/smart-data-analysis/** — free, public, HTTPS, no login.
+
+The static build runs the same Python backend inside the visitor's browser with Pyodide (`frontend/py-worker.js`); uploaded files are analyzed on the visitor's device and are never sent to any server. The first visit downloads the engine (about 40 s), later visits use the browser cache.
+
+Redeploy after changes:
+```powershell
+python scripts/build_static.py dist      # writes the static site (config.js sets SDAP_STATIC = true)
+# then publish the contents of dist/ to the gh-pages branch
+```
+
+## Server deployment (each visitor sees only their own data)
 - Every browser gets a random session token in an HttpOnly cookie (`sdap_sid`, `SameSite=Lax`, `Secure` behind HTTPS). Each upload is stored with that token; any other visitor asking for the dataset — even with the full link — gets `404`, exactly like a missing dataset. Uploads stay in memory only and expire after 3 hours.
 - Limits: `SDAP_MAX_PER_SESSION` (default 3 open datasets per visitor), `SDAP_MAX_DATASETS` (default 40 for all visitors), `SDAP_MAX_UPLOAD_MB` (default 50). Cross-origin API calls are only allowed from local dev servers or `SDAP_CORS_ORIGINS`.
 - Deploy with the `Dockerfile` (one worker: the data lives in that process). On Render: push this folder to a GitHub repository, then **New → Blueprint** and pick the repository (`render.yaml`). HTTPS is provided by the host.
